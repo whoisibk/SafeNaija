@@ -1,0 +1,23 @@
+from os import getenv
+from dotenv import load_dotenv
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from db.models import Base
+
+load_dotenv()
+
+
+DATABASE_URL = getenv("DATABASE_URL")
+
+engine = create_engine(DATABASE_URL)
+
+# establish connection to db
+connect = engine.connect()
+
+# create tables from predefined models
+Base.metadata.create_all(engine)
+
+Session = sessionmaker(bind=engine)
+session =  Session()
