@@ -12,8 +12,8 @@ class UserCreate(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-    firstName: str = Field(min_length=1, max_length=50, description="First name of the user")
-    lastName: str = Field(min_length=1, max_length=50, description="Last name of the user")
+    first_name: str = Field(min_length=1, max_length=50, description="First name of the user")
+    last_name: str = Field(min_length=1, max_length=50, description="Last name of the user")
 
     username: str = Field(min_length=1, max_length=50, description="Username of the user")
     email: EmailStr = Field(description="Email address of the user")
