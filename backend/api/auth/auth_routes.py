@@ -1,5 +1,6 @@
 from fastapi import APIRouter, status, HTTPException
 
+from db.database import session as db
 from schemas.schemas_ import UserCreate, UserLogin
 from queries.user_queries import create_user, get_user_by_email, get_user_by_username
 from utils.hashing import verify_password
@@ -23,15 +24,16 @@ def sign_up(user: UserCreate):
         dict: A dictionary containing the access token and token type.
     """
     try: new_user = create_user(user)
-    except ValueError as ve:
+    except Exception as e:
+        db.rollback()  # rollback any failed transaction
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(ve)
-        ) from ve
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database operation failed: {e}"
+        )
     
     try: 
         jwt_token = create_jwt_token(
-            data={"user_id": int(new_user.id)}
+            data={"user_id": str(new_user.id)}
         )
     except Exception as e:
         return {"An Error occurred": str(e)}
@@ -58,7 +60,7 @@ def login(user: UserLogin):
         )
     
     jwt_token = create_jwt_token(
-        data={"user_id": int(db_user.id)}
+        data={"user_id": str(db_user.id)}
     )
 
     return {"access_token": jwt_token, "token_type": "Bearer"}    
