@@ -24,10 +24,10 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(Uuid, primary_key=True, index=True, default=uuid4())
+    id = Column(Uuid, primary_key=True, index=True, default=uuid4)
 
-    firstName = Column(String(50), nullable=False)
-    lastName = Column(String(50), nullable=False)
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
 
     username = Column(String(30), unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
@@ -49,7 +49,7 @@ class Report(Base):
 
     __tablename__ = "reports"
 
-    id = Column(Uuid, primary_key=True, index=True, default=uuid4())
+    id = Column(Uuid, primary_key=True, index=True, default=uuid4)
     user_id = Column(Uuid, ForeignKey("users.id"), nullable=False)
     title = Column(String(50), nullable=False)
     description = Column(Text, nullable=False)
@@ -69,7 +69,7 @@ class Report(Base):
 
     # status of the report in the review process:
     # pending, verified, dismissed
-    status = Column(String, default="pending", nullable=False) 
+    report_status = Column(String, default="pending", nullable=False) 
 
     # # status of the incident in question:
     # status_of_incident = Column(String, default="ongoing", nullable=False)
@@ -83,8 +83,8 @@ class Category(Base):
 
     __tablename__ = "categories"
 
-    id = Column(Uuid, primary_key=True, index=True, default=uuid4())
-    name = Column(String(50), unique=True, nullable=False)
+    id = Column(Uuid, primary_key=True, index=True, default=uuid4)
+    name = Column(String(30), nullable=False)
 
 
 class ReportVote(Base):
@@ -92,7 +92,7 @@ class ReportVote(Base):
 
     __tablename__ = "report_votes"
 
-    id = Column(Uuid, primary_key=True, index=True, default=uuid4())
+    id = Column(Uuid, primary_key=True, index=True, default=uuid4)
     report_id = Column(Uuid, ForeignKey("reports.id"), nullable=False)
     user_id = Column(Uuid, ForeignKey("users.id"), nullable=False)
     vote = Column(String, nullable=False)  # upvote or downvote
@@ -101,4 +101,4 @@ class ReportVote(Base):
 
     # Ensure a user can only vote once per report
     # catch the error this generate when user tries to vote again, and handle it
-    __tableargs__ = (UniqueConstraint("report_id", "user_id", name="unique_report_user_vote"),)
+    __table_args__ = (UniqueConstraint("report_id", "user_id", name="unique_report_user_vote"),)
