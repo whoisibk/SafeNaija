@@ -2,7 +2,7 @@ from os import getenv
 from dotenv import load_dotenv
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from db.models import Base
 
@@ -13,11 +13,10 @@ DATABASE_URL = getenv("DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
 
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 # establish connection to db
 connect = engine.connect()
 
 # create tables from predefined models
 Base.metadata.create_all(engine)
-
-Session = sessionmaker(bind=engine)
-session =  Session()

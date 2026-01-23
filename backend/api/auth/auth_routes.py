@@ -1,8 +1,8 @@
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Depends
 
-from db.database import session as db
+from db.database import Session
 from schemas.schemas_ import UserCreate, UserLogin
-from queries.user_queries import create_user, get_user_by_email, get_user_by_username
+from queries.user_queries import create_user, get_user_by_email, get_db
 from utils.hashing import verify_password
 from utils.token import create_jwt_token
 
@@ -16,34 +16,32 @@ router = APIRouter()
 
 
 @router.post("/signup")
-def sign_up(user: UserCreate):
+def sign_up(user: UserCreate, db_session: Session = Depends(get_db)):
     """Register a new user.
     Args:
         user (UserCreate): The user registration details.
     Returns:
         dict: A dictionary containing the access token and token type.
     """
-    try: new_user = create_user(user)
+    try:
+        new_user = create_user(user, db_session)
     except Exception as e:
-        db.rollback()  # rollback any failed transaction
+        db_session.rollback()  # rollback any failed transaction
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Database operation failed: {e}"
+            detail=f"Database operation failed: {e}",
         )
-    
-    try: 
-        jwt_token = create_jwt_token(
-            data={"user_id": str(new_user.id)}
-        )
+
+    try:
+        jwt_token = create_jwt_token(data={"user_id": str(new_user.id)})
     except Exception as e:
         return {"An Error occurred": str(e)}
-    
 
     return {"status": 200, "access_token": jwt_token, "token_type": "Bearer"}
 
 
 @router.post("/login")
-def login(user: UserLogin):
+def login(user: UserLogin, db_session: Session = Depends(get_db)):
     """Authenticate user and return JWT token.
     Args:
         user (UserLogin): The user login details.
@@ -51,20 +49,17 @@ def login(user: UserLogin):
         dict: A dictionary containing the access token and token type.
     """
 
-    db_user = get_user_by_email(user.email)
+    db_user = get_user_by_email(user.email, db_session)
 
     # check if user exists or password is correct
     if not db_user or verify_password(user.password, db_user.password_hash) is False:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
-    
-    jwt_token = create_jwt_token(
-        data={"user_id": str(db_user.id)}
-    )
 
-    return {"access_token": jwt_token, "token_type": "Bearer"}    
+    jwt_token = create_jwt_token(data={"user_id": str(db_user.id)})
 
+    return {"access_token": jwt_token, "token_type": "Bearer"}
 
 
 @router.post("/logout")
