@@ -5,4 +5,3 @@ app = FastAPI()
 
 # Mount all auth endpoints under /auth
 app.include_router(auth_router)
-

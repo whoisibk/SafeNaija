@@ -55,7 +55,7 @@ class Report(Base):
     description = Column(Text, nullable=False)
     category_id = Column(Uuid, ForeignKey("categories.id"), nullable=False)
 
-     # for map plotting / geolocation
+    # for map plotting / geolocation
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 
@@ -69,7 +69,7 @@ class Report(Base):
 
     # status of the report in the review process:
     # pending, verified, dismissed
-    report_status = Column(String, default="pending", nullable=False) 
+    report_status = Column(String, default="pending", nullable=False)
 
     # # status of the incident in question:
     # status_of_incident = Column(String, default="ongoing", nullable=False)
@@ -101,4 +101,6 @@ class ReportVote(Base):
 
     # Ensure a user can only vote once per report
     # catch the error this generate when user tries to vote again, and handle it
-    __table_args__ = (UniqueConstraint("report_id", "user_id", name="unique_report_user_vote"),)
+    __table_args__ = (
+        UniqueConstraint("report_id", "user_id", name="unique_report_user_vote"),
+    )
