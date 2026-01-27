@@ -55,24 +55,16 @@ class Report(Base):
     description = Column(Text, nullable=False)
     category_id = Column(Uuid, ForeignKey("categories.id"), nullable=False)
 
+    severity = Column(Integer, nullable=False)  # e.g., scale of 1-3 for severity level
+
     # for map plotting / geolocation
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 
-    image_url = Column(String, nullable=True)
+    media_url = Column(String, nullable=True)
 
-    """ Based on your code structure, this is the **status of the report itself** that a user publishes.
-    The `Report` model tracks an incident report submitted by a user, and the `status` 
-     field indicates the lifecycle state of that report (pending review, verified as accurate, or dismissed as invalid/false).
-    If you wanted to track the accident/incident status separately (e.g., "ongoing", "resolved"), 
-    you would need a different column or a separate `Incident` model. """
-
-    # status of the report in the review process:
     # pending, verified, dismissed
-    report_status = Column(String, default="pending", nullable=False)
-
-    # # status of the incident in question:
-    # status_of_incident = Column(String, default="ongoing", nullable=False)
+    verification_status = Column(String, default="pending", nullable=False)
 
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
