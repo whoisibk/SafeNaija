@@ -1,7 +1,13 @@
 from fastapi import FastAPI
-from api.auth.auth_routes import router as auth_router
 
 app = FastAPI()
 
+from api.auth.auth_routes import router as auth_router
+
 # Mount all auth endpoints under /auth
 app.include_router(auth_router)
+
+
+from api.reports.report_routes import router as report_router
+
+app.include_router(report_router, prefix="/reports")

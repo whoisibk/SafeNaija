@@ -15,10 +15,6 @@ class UserCreate(BaseModel):
     last_name: str = Field(
         min_length=1, max_length=50, description="Last name of the user"
     )
-
-    username: str = Field(
-        min_length=1, max_length=50, description="Username of the user"
-    )
     email: EmailStr = Field(description="Email address of the user")
 
     password: str = Field(
@@ -38,9 +34,9 @@ class UserDisplay(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     id: uuid = Field(description="Unique identifier for the user")
-    firstName: str = Field(description="First name of the user")
-    lastName: str = Field(description="Last name of the user")
+    first_name: str = Field(description="First name of the user")
+    last_name: str = Field(description="Last name of the user")
     username: str = Field(description="Username of the user")
     email: EmailStr = Field(description="Email address of the user")
-    is_active: bool = Field(description="Indicates if the user is active")
-    role: str = Field(description="Role of the user")
+    is_active: bool = Field(default=True, description="Indicates if the user is active")
+    role: str = Field(default="user", description="Role of the user")

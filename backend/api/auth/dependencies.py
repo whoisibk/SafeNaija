@@ -2,7 +2,7 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
 
 from db.database import Session
-from queries.user_queries import get_user_by_id
+from queries.user_queries import get_user_by_id, get_db
 from schemas.schemas_ import UserDisplay
 from utils.token import decode_token
 
@@ -11,7 +11,9 @@ from utils.token import decode_token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> UserDisplay:
+def get_current_user(
+    token: str = Depends(oauth2_scheme), db_session: Session = Depends(get_db)
+) -> UserDisplay:
     """Get the current authenticated user from the JWT token.
 
     Args:
@@ -42,13 +44,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> UserDisplay:
         ) from e
 
     # Fetch user from database
-    user = get_user_by_id(user_id, Session())
+    user = get_user_by_id(user_id, db_session)
 
     # Convert ORM model to Pydantic schema
     return UserDisplay(
         id=user.id,
-        firstName=user.firstName,
-        lastName=user.lastName,
+        first_name=user.first_name,
+        last_name=user.last_name,
         username=user.username,
         email=user.email,
         is_active=user.is_active,
