@@ -18,15 +18,13 @@ def get_db():
 def create_user(user: UserCreate, db_session: Session = Depends(get_db)) -> User:
     """Adds a new user to the database."""
 
-    if get_user_by_email(user.email, db_session) or get_user_by_username(
-        user.username, db_session
-    ):
+    if get_user_by_email(user.email, db_session) is not None:
         raise ValueError("User with this email or username already exists.")
 
     new_user = User(
         first_name=user.first_name.title(),
         last_name=user.last_name.title(),
-        username=user.username,
+        username=user.first_name.lower()[:5] + user.last_name.lower()[:5],
         email=user.email.lower(),
         password_hash=hash_password(user.password),
     )
@@ -50,14 +48,6 @@ def get_user_by_id(user_id: int, db_session: Session) -> User:
 def get_user_by_email(email: str, db_session: Session) -> User:
 
     user = db_session.query(User).filter(User.email == email).first()
-    if user is None:
-        return None
-    return user
-
-
-def get_user_by_username(username: str, db_session: Session) -> User:
-
-    user = db_session.query(User).filter(User.username == username).first()
     if user is None:
         return None
     return user
