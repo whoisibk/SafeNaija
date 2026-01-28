@@ -55,9 +55,9 @@ def report_create(
         return {"An error occurred while creating the report": str(e)}
 
 
+
+
 """""" "-----------------------------------REPORT FETCHING----------------------------------------------" """""" ""
-
-
 @router.get("/my")
 def view_my_reports(
     user: User = Depends(get_current_user), db_session: Session = Depends(get_db)
@@ -124,7 +124,39 @@ def update_my_report(
     except Exception as e:
         db_session.rollback()
         return {"An error occurred while updating the report": str(e)}
+    
 
+
+"""""" "-----------------------------------REPORT DELETION----------------------------------------------" """""" ""
+
+@router.delete("/my/{report_id}")
+def delete_my_report(
+    report_id: Uuid,
+    user: User = Depends(get_current_user),
+    db_session: Session = Depends(get_db),
+):
+    """Endpoint to delete a specific report made by the current user"""
+
+    user_id = user.id
+    report = (
+        db_session.query(Report)
+        .filter(Report.id == report_id, Report.user_id == user_id)
+        .first()
+    )
+    if not report:
+        return {"message": "Report not found."}
+
+    try:
+        db_session.delete(report)
+        db_session.commit()
+        return {"message": "Report deleted successfully"}
+    except Exception as e:
+        db_session.rollback()
+        return {"An error occurred while deleting the report": str(e)}
+    
+
+
+"""""" "-----------------------------------NOT USER-SPECIFIC ENDPOINTS----------------------------------------------" """""" ""
 
 @router.get("/view")
 def view_reports(
@@ -261,3 +293,32 @@ def upvote_report(
     except Exception as e:
         db_session.rollback()
         return {"An error occurred while upvoting the report": str(e)}
+
+
+
+@router.delete("/{report_id}/upvote")
+def remove_upvote_report(
+    report_id: Uuid,
+    user: User = Depends(get_current_user),
+    db_session: Session = Depends(get_db),
+):
+    """Endpoint to remove an upvote from a report."""
+    user_id = user.id
+
+    # Check if the user has voted on this report
+    existing_vote = (
+        db_session.query(ReportVote)
+        .filter(ReportVote.report_id == report_id, ReportVote.user_id == user_id)
+        .first()
+    )
+
+    if not existing_vote or existing_vote.vote != "upvote":
+        return {"message": "You have not upvoted this report."}
+
+    try:
+        db_session.delete(existing_vote)
+        db_session.commit()
+        return {"message": "Upvote removed successfully."}
+    except Exception as e:
+        db_session.rollback()
+        return {"An error occurred while removing the upvote": str(e)}
