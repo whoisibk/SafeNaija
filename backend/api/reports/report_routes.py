@@ -163,6 +163,7 @@ def view_reports(
     category: str = None,
     severity: Severity = None,
     created_at: datetime = None,
+    verification_status: str = None,
     limit=25,
     db_session: Session = Depends(get_db),
 ):
@@ -195,6 +196,10 @@ def view_reports(
     if created_at:
         # Filter reports by creation date
         query = query.filter(Report.created_at >= created_at)
+    
+    if verification_status:
+        # Filter reports by verification status
+        query = query.filter(Report.verification_status == verification_status)
 
     # Limit the number of reports returned
     reports = query.limit(limit).all()
@@ -278,22 +283,34 @@ def upvote_report(
         .first()
     )
 
+    reportmodel = db_session.query(Report).filter(Report.id == report_id).first()
+    
+
     if existing_vote:
+        current_upvotes = reportmodel.upvote_count or 0
         if existing_vote.vote == "upvote":
             return {"message": "You have already upvoted this report."}
         else:
             existing_vote.vote = "upvote"
+            current_upvotes += 1
+
+            if current_upvotes > 2:
+                reportmodel.verification_status = "verified"
+                
     else:
         new_vote = ReportVote(report_id=report_id, user_id=user_id, vote="upvote")
+        current_upvotes = reportmodel.upvote_count or 0
         db_session.add(new_vote)
+        current_upvotes += 1
+
 
     try:
         db_session.commit()
+        reportmodel.upvote_count = current_upvotes
         return {"message": "Report upvoted successfully."}
     except Exception as e:
         db_session.rollback()
         return {"An error occurred while upvoting the report": str(e)}
-
 
 
 @router.delete("/{report_id}/upvote")
@@ -314,6 +331,10 @@ def remove_upvote_report(
 
     if not existing_vote or existing_vote.vote != "upvote":
         return {"message": "You have not upvoted this report."}
+    
+    reportmodel = db_session.query(Report).filter(Report.id == report_id).first()
+    current_upvotes = reportmodel.upvote_count or 0
+    reportmodel.upvote_count = max(0, current_upvotes - 1)
 
     try:
         db_session.delete(existing_vote)
@@ -322,3 +343,4 @@ def remove_upvote_report(
     except Exception as e:
         db_session.rollback()
         return {"An error occurred while removing the upvote": str(e)}
+
