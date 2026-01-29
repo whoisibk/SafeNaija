@@ -65,6 +65,8 @@ class Report(Base):
 
     # pending, verified, dismissed
     verification_status = Column(String, default="pending", nullable=False)
+    
+    upvote_count = Column(Integer, default=0)
 
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
@@ -87,7 +89,7 @@ class ReportVote(Base):
     id = Column(Uuid, primary_key=True, index=True, default=uuid4)
     report_id = Column(Uuid, ForeignKey("reports.id"), nullable=False)
     user_id = Column(Uuid, ForeignKey("users.id"), nullable=False)
-    vote = Column(String, nullable=False)  # upvote or downvote
+    vote = Column(String, nullable=False)  # upvote or none
 
     created_at = Column(DateTime, default=datetime.now)
 
