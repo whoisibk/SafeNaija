@@ -24,19 +24,19 @@ class Severity(str, Enum):
     high = "high"
 
 
-class ReportCreate(ReportBase):
-    """Schema for creating a new report."""
+# class ReportCreate(BaseModel):
+#     """Schema for creating a new report."""
 
-    severity: Severity = Field(
-        default=Severity.low, description="Severity level of the report"
-    )
+#     severity: Severity = Field(
+#         default=Severity.low, description="Severity level of the report"
+#     )
 
-    latitude: float = Field(None, description="Latitude for geolocation")
-    longitude: float = Field(None, description="Longitude for geolocation")
+#     latitude: float = Field(None, description="Latitude for geolocation")
+#     longitude: float = Field(None, description="Longitude for geolocation")
 
-    media_url: str = Field(
-        None, description="URL of the image associated with the report"
-    )
+#     media_url: str = Field(
+#         None, description="URL of the image associated with the report"
+#     )
 
 
 class ReportUpdate(BaseModel):

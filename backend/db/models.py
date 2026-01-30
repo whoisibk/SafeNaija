@@ -65,7 +65,7 @@ class Report(Base):
 
     # pending, verified, dismissed
     verification_status = Column(String, default="pending", nullable=False)
-    
+
     upvote_count = Column(Integer, default=0)
 
     created_at = Column(DateTime, default=datetime.now)
