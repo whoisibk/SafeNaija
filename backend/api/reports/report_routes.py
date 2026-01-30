@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, Form, File
 
-from queries.report_queries import create_report
+from queries.report_queries import create_report, upload_image
 from queries.category_queries import get_category_id
 from queries.user_queries import get_db, Session
 
 from api.auth.dependencies import get_current_user
-from schemas.report_schemas import ReportCreate, ReportUpdate, Severity
+from schemas.report_schemas import ReportUpdate, Severity
 from db.models import User, Report, ReportVote
 from uuid import UUID as Uuid
 from datetime import datetime
@@ -19,45 +19,58 @@ router = APIRouter()
 
 @router.post("/create")
 def report_create(
-    report: ReportCreate,
     user: User = Depends(get_current_user),
     db_session: Session = Depends(get_db),
+    title: str = Form(...),
+    description: str = Form(...),
+    category: str = Form(...),
+    severity: str = Form(...),
+    image: UploadFile | None = File(None),
+    latitude: float | None = Form(None),
+    longitude: float | None = Form(None),
 ):
-    """Endpoint to create a report.
+    """Endpoint to create a new report.
     Args:
-        user (User): The current authenticated user.
-        report(ReportCreate): The report details from the user.
-
-    Returns:
-
+        title (str): Title of the report.
+        description (str): Detailed description of the report.
+        category (str): Category of the report.
+        severity (str): Severity level of the report.
+        image (UploadFile|None): Image file associated with the report.
+        latitude (float|None): Latitude for geolocation.
+        longitude (float|None): Longitude for geolocation.
     """
     user_id = user.id
-    # Convert Pydantic model to dictionary
-    report = report.model_dump()
 
-    category_id = get_category_id(report["category"], db_session)
+    category_id = get_category_id(category, db_session)
 
-    new_report = Report(
-        title=report["title"],
-        description=report["description"],
+    media_url = None
+    if image:
+        try:
+            media_url = upload_image(image)
+        except ValueError as ve:
+            return {"error": str(ve)}
+
+    report = Report(
+        title=title,
+        description=description,
         category_id=category_id,
-        severity=report.get("severity").lower().strip(),
         user_id=user_id,
-        latitude=report.get("latitude"),
-        longitude=report.get("longitude"),
-        media_url=report.get("media_url"),
+        severity=severity,
+        latitude=latitude,
+        longitude=longitude,
+        media_url=media_url,
     )
 
     try:
-        create_report(new_report, db_session)
+        create_report(report, db_session)
         return {"message": "Report created successfully", "report": report}
     except Exception as e:
         return {"An error occurred while creating the report": str(e)}
 
 
-
-
 """""" "-----------------------------------REPORT FETCHING----------------------------------------------" """""" ""
+
+
 @router.get("/my")
 def view_my_reports(
     user: User = Depends(get_current_user), db_session: Session = Depends(get_db)
@@ -124,10 +137,10 @@ def update_my_report(
     except Exception as e:
         db_session.rollback()
         return {"An error occurred while updating the report": str(e)}
-    
 
 
 """""" "-----------------------------------REPORT DELETION----------------------------------------------" """""" ""
+
 
 @router.delete("/my/{report_id}")
 def delete_my_report(
@@ -153,10 +166,10 @@ def delete_my_report(
     except Exception as e:
         db_session.rollback()
         return {"An error occurred while deleting the report": str(e)}
-    
 
 
 """""" "-----------------------------------NOT USER-SPECIFIC ENDPOINTS----------------------------------------------" """""" ""
+
 
 @router.get("/view")
 def view_reports(
@@ -196,7 +209,7 @@ def view_reports(
     if created_at:
         # Filter reports by creation date
         query = query.filter(Report.created_at >= created_at)
-    
+
     if verification_status:
         # Filter reports by verification status
         query = query.filter(Report.verification_status == verification_status)
@@ -284,7 +297,6 @@ def upvote_report(
     )
 
     reportmodel = db_session.query(Report).filter(Report.id == report_id).first()
-    
 
     if existing_vote:
         current_upvotes = reportmodel.upvote_count or 0
@@ -296,13 +308,12 @@ def upvote_report(
 
             if current_upvotes > 2:
                 reportmodel.verification_status = "verified"
-                
+
     else:
         new_vote = ReportVote(report_id=report_id, user_id=user_id, vote="upvote")
         current_upvotes = reportmodel.upvote_count or 0
         db_session.add(new_vote)
         current_upvotes += 1
-
 
     try:
         db_session.commit()
@@ -331,7 +342,7 @@ def remove_upvote_report(
 
     if not existing_vote or existing_vote.vote != "upvote":
         return {"message": "You have not upvoted this report."}
-    
+
     reportmodel = db_session.query(Report).filter(Report.id == report_id).first()
     current_upvotes = reportmodel.upvote_count or 0
     reportmodel.upvote_count = max(0, current_upvotes - 1)
@@ -343,4 +354,3 @@ def remove_upvote_report(
     except Exception as e:
         db_session.rollback()
         return {"An error occurred while removing the upvote": str(e)}
-
