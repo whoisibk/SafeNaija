@@ -7,9 +7,11 @@ alembic/versions/__pycache__/
 
 
 api/__pycache__/
-api/auth/__pycache__/
 
+api/auth/__pycache__/
 api/reports/__pycache__/
+api/categories/__pycache__/
+
 
 db/__pycache__/
 
